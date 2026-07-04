@@ -4,7 +4,7 @@
 // @version      1.0
 // @description  수동 중단 시에도 보상 수령 완벽 지원, 다중 계정 및 플레이크 수익 계산 패널 탑재
 // @icon         https://reward.onstove.com/favicon.ico
-// @match        *://reward.onstove.com/*
+// @match        https://reward.onstove.com/ko/event*
 // @updateURL    https://raw.githubusercontent.com/TellurideX/New-Stove-Flake-Automation-Script-Tampermonkey/main/main.user.js
 // @downloadURL  https://raw.githubusercontent.com/TellurideX/New-Stove-Flake-Automation-Script-Tampermonkey/main/main.user.js
 // @grant        none
