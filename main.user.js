@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         스토브 100뽑기 API 자동화
+// @name         New-Stove-Flake-Automation-Script-Tampermonkey
 // @namespace    http://tampermonkey.net/
-// @version      1.0
-// @description  수동 중단 시에도 보상 수령 완벽 지원, 다중 계정 및 플레이크 수익 계산 패널 탑재
+// @version      1.1
+// @description  플레이크 자동화 스크립트(NEW)
 // @icon         https://reward.onstove.com/favicon.ico
 // @match        https://reward.onstove.com/ko/event*
 // @updateURL    https://raw.githubusercontent.com/TellurideX/New-Stove-Flake-Automation-Script-Tampermonkey/main/main.user.js
@@ -15,18 +15,18 @@
 
     let SAVED_TOKEN = "";
     let CALLER_ID = "flake-fe";
-    let CALLER_DETAIL = "abb02500-599b-4a35-918c-989fc3ff0647"; 
-    
-    let ABSOLUTE_DRAW_CNT = null; 
-    let CURRENT_LOGS = []; 
-    let TRACKED_SPENT = 0; 
-    let TRACKED_EARNED = 0; 
-    
-    const MAX_DRAW = 30;
-    const DELAY_MS = 500; 
-    let isRunning = false; 
+    let CALLER_DETAIL = "abb02500-599b-4a35-918c-989fc3ff0647";
 
-    console.log("🔴 스토브 자동화 정식 V1.0 로드 완료. 사용자 통제 모드 활성화...");
+    let ABSOLUTE_DRAW_CNT = null;
+    let CURRENT_LOGS = [];
+    let TRACKED_SPENT = 0;
+    let TRACKED_EARNED = 0;
+
+    const MAX_DRAW = 30;
+    const DELAY_MS = 500;
+    let isRunning = false;
+
+    console.log("🔴 New-Stove-Flake-Automation-Script-Tampermonkey V1.0 로드 완료.");
 
     // ==========================================
     // 0. 장부 관리 및 고유 ID 해독 시스템
@@ -39,18 +39,18 @@
         if (!token) return 'unknown';
         try {
             const base64Url = token.split('.')[1];
-            if (!base64Url) return token.slice(-20); 
-            
+            if (!base64Url) return token.slice(-20);
+
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
             const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
                 return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
             }).join(''));
             const parsed = JSON.parse(jsonPayload);
-            
+
             if (parsed.member_no) return String(parsed.member_no);
             if (parsed.sub) return String(parsed.sub);
             if (parsed.user_id) return String(parsed.user_id);
-            return token.slice(-20); 
+            return token.slice(-20);
         } catch(e) {
             return token.slice(-20);
         }
@@ -61,10 +61,10 @@
         try {
             let data = JSON.parse(localStorage.getItem('stove_macro_ledger') || '{}');
             if (data.date !== getTodayDate()) data = { date: getTodayDate(), accounts: {} };
-            
-            const accountId = getAccountId(token); 
+
+            const accountId = getAccountId(token);
             const accData = data.accounts[accountId];
-            
+
             if (accData === undefined || typeof accData === 'number') {
                 const oldCount = typeof accData === 'number' ? accData : 0;
                 data.accounts[accountId] = { count: oldCount, logs: [], spent: 0, earned: 0 };
@@ -72,7 +72,7 @@
                 data.accounts[accountId].spent = 0;
                 data.accounts[accountId].earned = 0;
             }
-            
+
             if (updates.count !== undefined) data.accounts[accountId].count = updates.count;
             if (updates.newLog !== undefined) data.accounts[accountId].logs.push(updates.newLog);
             if (updates.earnedFlakes !== undefined) {
@@ -88,7 +88,7 @@
         if (!token) return null;
         try {
             let data = JSON.parse(localStorage.getItem('stove_macro_ledger') || '{}');
-            const accountId = getAccountId(token); 
+            const accountId = getAccountId(token);
             if (data.date === getTodayDate() && data.accounts && data.accounts[accountId] !== undefined) {
                 const accData = data.accounts[accountId];
                 if (typeof accData === 'number') return { count: accData, logs: [], spent: 0, earned: 0 };
@@ -99,7 +99,7 @@
                 return accData;
             }
         } catch(e) {}
-        return null; 
+        return null;
     }
 
     // ==========================================
@@ -108,23 +108,23 @@
     function updateCountUI() {
         const countText = document.getElementById("draw-count-text");
         const targetBtn = document.getElementById("auto-draw-btn");
-        
+
         if (countText && ABSOLUTE_DRAW_CNT !== null) {
             countText.innerText = `현재 계정 참여: ${ABSOLUTE_DRAW_CNT} / ${MAX_DRAW} 회`;
-            
+
             if (ABSOLUTE_DRAW_CNT >= MAX_DRAW) {
-                countText.style.color = "#f44336"; 
+                countText.style.color = "#f44336";
                 if (targetBtn) {
-                    targetBtn.innerHTML = "❌ 누적 보상 수령하기"; 
-                    targetBtn.style.backgroundColor = "#2196F3"; 
+                    targetBtn.innerHTML = "❌ 누적 보상 수령하기";
+                    targetBtn.style.backgroundColor = "#2196F3";
                     targetBtn.dataset.status = "done";
-                    isRunning = false; 
+                    isRunning = false;
                 }
             } else {
-                countText.style.color = "#4CAF50"; 
+                countText.style.color = "#4CAF50";
                 if (!isRunning && SAVED_TOKEN && targetBtn && targetBtn.dataset.status !== "done") {
                     targetBtn.innerHTML = "⚡ 자동 뽑기 시작";
-                    targetBtn.style.backgroundColor = "#4CAF50"; 
+                    targetBtn.style.backgroundColor = "#4CAF50";
                     targetBtn.dataset.status = "ready";
                 }
             }
@@ -138,34 +138,34 @@
                 logBox.innerHTML = `<div style="color:#666; text-align:center; padding-top:25px;">기록이 없습니다.</div>`;
             } else {
                 logBox.innerHTML = CURRENT_LOGS.map(log => `<div style="margin-bottom:3px;">${log}</div>`).join('');
-                logBox.scrollTop = logBox.scrollHeight; 
+                logBox.scrollTop = logBox.scrollHeight;
             }
         }
 
         const elSpent = document.getElementById("summary-spent");
         const elEarned = document.getElementById("summary-earned");
         const elProfit = document.getElementById("summary-profit");
-        
+
         if (elSpent && elEarned && elProfit) {
             elSpent.innerText = `-${TRACKED_SPENT.toLocaleString()}`;
             elEarned.innerText = `+${TRACKED_EARNED.toLocaleString()}`;
-            
+
             const profit = TRACKED_EARNED - TRACKED_SPENT;
             if (profit > 0) {
                 elProfit.innerText = `+${profit.toLocaleString()}`;
-                elProfit.style.color = "#4CAF50"; 
+                elProfit.style.color = "#4CAF50";
             } else if (profit < 0) {
                 elProfit.innerText = `${profit.toLocaleString()}`;
-                elProfit.style.color = "#f44336"; 
+                elProfit.style.color = "#f44336";
             } else {
                 elProfit.innerText = `0`;
-                elProfit.style.color = "#aaa"; 
+                elProfit.style.color = "#aaa";
             }
         }
     }
 
     // ==========================================
-    // 1-5. 누적 보상 자동 수령 
+    // 1-5. 누적 보상 자동 수령
     // ==========================================
     async function autoClaimCumulativeRewards() {
         const buttons = document.querySelectorAll("button.stds-button");
@@ -175,7 +175,7 @@
             const text = btn.innerText || "";
             if (text.includes("받기") && !btn.disabled) {
                 console.log(`🟢 [누적 보상 발견] 활성화된 버튼 클릭: ${text.trim()}`);
-                btn.click(); 
+                btn.click();
                 claimedCount++;
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
@@ -203,7 +203,7 @@
                 if (SAVED_TOKEN !== token) {
                     SAVED_TOKEN = token;
                     const savedData = loadDataFromLocal(SAVED_TOKEN);
-                    
+
                     if (savedData) {
                         ABSOLUTE_DRAW_CNT = savedData.count;
                         CURRENT_LOGS = savedData.logs || [];
@@ -215,7 +215,7 @@
                         TRACKED_SPENT = 0;
                         TRACKED_EARNED = 0;
                     }
-                    
+
                     if (ABSOLUTE_DRAW_CNT === null) {
                         const btn = document.getElementById("auto-draw-btn");
                         if(btn) {
@@ -225,7 +225,7 @@
                         }
                     }
                     updateCountUI();
-                    renderLogsAndSummary(); 
+                    renderLogsAndSummary();
                 }
             }
         }
@@ -234,35 +234,35 @@
 
         if (url && url.includes("/draw/1000000374")) {
             try {
-                const clonedResponse = response.clone(); 
+                const clonedResponse = response.clone();
                 const data = await clonedResponse.json();
-                
+
                 if (response.ok && (data.code === 0 || data.message === 'OK')) {
                     if (data.value && data.value.user_draw_cnt !== undefined) {
                         ABSOLUTE_DRAW_CNT = data.value.user_draw_cnt;
-                        
+
                         const giftInfo = data.value.gift_info || {};
                         const itemName = giftInfo.gift_name || "알 수 없는 아이템";
                         const earnedFlakes = (giftInfo.gift_type === 'flake') ? (giftInfo.gift_price || 0) : 0;
-                        
+
                         const timeStr = new Date().toLocaleTimeString('ko-KR', { hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit' });
                         const logMsg = `<span style="color:#888;">[${timeStr}]</span> <span style="color:#4CAF50; font-weight:bold;">${itemName}</span>`;
-                        
-                        const updatedData = updateLedger(SAVED_TOKEN, { 
-                            count: ABSOLUTE_DRAW_CNT, 
+
+                        const updatedData = updateLedger(SAVED_TOKEN, {
+                            count: ABSOLUTE_DRAW_CNT,
                             newLog: logMsg,
                             earnedFlakes: earnedFlakes
                         });
-                        
+
                         if(updatedData) {
                             CURRENT_LOGS = updatedData.logs;
                             TRACKED_SPENT = updatedData.spent;
                             TRACKED_EARNED = updatedData.earned;
                             renderLogsAndSummary();
                         }
-                        updateCountUI(); 
+                        updateCountUI();
                     }
-                } 
+                }
                 else if (data.code === 7020 || (data.message && data.message.includes('exceeded'))) {
                     ABSOLUTE_DRAW_CNT = MAX_DRAW;
                     updateLedger(SAVED_TOKEN, { count: ABSOLUTE_DRAW_CNT });
@@ -286,14 +286,14 @@
                 headers: {
                     "Content-Type": "application/json",
                     "Accept": "application/json",
-                    "Authorization": SAVED_TOKEN, 
+                    "Authorization": SAVED_TOKEN,
                     "Caller-Id": CALLER_ID,
                     "Caller-Detail": CALLER_DETAIL,
                     "X-Lang": "ko",
                     "X-Nation": "KR"
                 },
                 body: JSON.stringify(payload),
-                credentials: "include" 
+                credentials: "include"
             });
         } catch (error) {
             isRunning = false;
@@ -315,12 +315,12 @@
         container.style.borderRadius = "8px";
         container.style.boxShadow = "0px 10px 20px rgba(0,0,0,0.5)";
         container.style.fontFamily = "sans-serif";
-        container.style.width = "220px"; 
-        container.style.cursor = "move"; 
+        container.style.width = "220px";
+        container.style.cursor = "move";
 
         container.innerHTML = `
-            <div style="font-weight:bold; margin-bottom:5px; font-size:14px; text-align:center; color:#ff9800; pointer-events:none;">🎰 100뽑기 자동화 V1.0</div>
-            
+            <div style="font-weight:bold; margin-bottom:5px; font-size:11px; text-align:center; color:#ff9800; pointer-events:none; word-break:break-all;">🎰 New-Stove-Flake-Automation</div>
+
             <div id="draw-count-text" style="text-align:center; margin-bottom:10px; font-size:13px; color:#aaa; font-weight:bold; pointer-events:none;">
                 계정 연결 대기 중...
             </div>
@@ -328,7 +328,7 @@
             <button id="auto-draw-btn" data-status="waiting" style="width:100%; padding:10px; border:none; border-radius:4px; background-color:#555; color:white; font-weight:bold; cursor:pointer; line-height: 1.4; transition: 0.2s; margin-bottom: 10px;">
                 🔄 토큰 대기 중...<br><span style="font-size:11px; font-weight:normal;">(화면의 원래 버튼 1회 클릭)</span>
             </button>
-            
+
             <div id="draw-log-box" style="height: 85px; overflow-y: auto; background-color: #111; border-radius: 4px; padding: 8px; font-size: 11px; color: #ddd; border: 1px solid #333; margin-bottom: 5px; cursor: default;">
                 <div style="color:#666; text-align:center; padding-top:25px;">기록이 없습니다.</div>
             </div>
@@ -372,7 +372,7 @@
 
         document.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
-            e.preventDefault(); 
+            e.preventDefault();
             container.style.left = (e.clientX - offsetX) + 'px';
             container.style.top = (e.clientY - offsetY) + 'px';
         });
@@ -401,39 +401,40 @@
             if (this.dataset.status === "running") {
                 isRunning = false;
                 this.innerHTML = "🛑 중지 및 새로고침 중...";
-                this.style.backgroundColor = "#f44336"; 
-                
+                this.style.backgroundColor = "#f44336";
+
                 localStorage.setItem('stove_macro_auto_claim', 'true');
                 setTimeout(() => {
                     window.location.reload();
                 }, 800);
                 return;
             }
-            
+
             if (this.dataset.status === "ready") {
                 if (ABSOLUTE_DRAW_CNT !== null && ABSOLUTE_DRAW_CNT >= MAX_DRAW) {
                     await autoClaimCumulativeRewards();
-                    return; 
+                    return;
                 }
 
                 isRunning = true;
                 this.dataset.status = "running";
-                
+
                 while (ABSOLUTE_DRAW_CNT < MAX_DRAW && isRunning) {
                     this.innerHTML = `⏳ 달리는 중...<br><span style="font-size:11px; font-weight:normal;">(클릭 시 정지)</span>`;
                     this.style.backgroundColor = "#ff9800";
-                    
-                    await executeDraw(); 
+
+                    await executeDraw();
 
                     if (ABSOLUTE_DRAW_CNT < MAX_DRAW && isRunning) {
                         await new Promise(resolve => setTimeout(resolve, DELAY_MS));
                     }
                 }
 
-                if (isRunning && ABSOLUTE_DRAW_CNT >= MAX_DRAW) {
-                    isRunning = false;
-                    updateCountUI(); 
-                    localStorage.setItem('stove_macro_auto_claim', 'true'); 
+                isRunning = false;
+                updateCountUI();
+
+                if (ABSOLUTE_DRAW_CNT >= MAX_DRAW) {
+                    localStorage.setItem('stove_macro_auto_claim', 'true');
                     setTimeout(() => {
                         window.location.reload();
                     }, 500);
@@ -449,7 +450,7 @@
     }
 
     if (localStorage.getItem('stove_macro_auto_claim') === 'true') {
-        localStorage.removeItem('stove_macro_auto_claim'); 
+        localStorage.removeItem('stove_macro_auto_claim');
         setTimeout(() => {
             autoClaimCumulativeRewards();
         }, 2000);
