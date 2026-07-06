@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         New-Stove-Flake-Automation-Script-Tampermonkey
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.0
 // @description  플레이크 자동화 스크립트(NEW)
 // @icon         https://reward.onstove.com/favicon.ico
 // @match        https://reward.onstove.com/ko/event*
