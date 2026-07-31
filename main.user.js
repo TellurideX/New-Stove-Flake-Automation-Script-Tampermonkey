@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         New-Stove-Flake-Automation-Script-Tampermonkey
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  플레이크 자동화 스크립트(NEW)
 // @icon         https://reward.onstove.com/favicon.ico
 // @match        https://reward.onstove.com/ko/event*
@@ -232,7 +232,7 @@
 
         const response = await originalFetch.apply(this, args);
 
-        if (url && url.includes("/draw/1000000374")) {
+        if (url && url.includes("/draw/1000000383")) {
             try {
                 const clonedResponse = response.clone();
                 const data = await clonedResponse.json();
@@ -277,7 +277,7 @@
     // 3. API 단일 호출
     // ==========================================
     async function executeDraw() {
-        const url = "https://api.onstove.com/emsbackapi/v3.0/draw/1000000374";
+        const url = "https://api.onstove.com/emsbackapi/v3.0/draw/1000000383";
         const payload = { type_no: 1 };
 
         try {
