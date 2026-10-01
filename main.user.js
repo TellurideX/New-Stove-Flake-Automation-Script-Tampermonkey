@@ -232,7 +232,7 @@
 
         const response = await originalFetch.apply(this, args);
 
-        if (url && url.includes("/draw/1000000395")) {
+        if (url && url.includes("/draw/1000000406")) {
             try {
                 const clonedResponse = response.clone();
                 const data = await clonedResponse.json();
@@ -277,7 +277,7 @@
     // 3. API 단일 호출
     // ==========================================
     async function executeDraw() {
-        const url = "https://api.onstove.com/emsbackapi/v3.0/draw/1000000395";
+        const url = "https://api.onstove.com/emsbackapi/v3.0/draw/1000000406";
         const payload = { type_no: 1 };
 
         try {
